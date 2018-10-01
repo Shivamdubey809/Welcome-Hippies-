@@ -1,59 +1,52 @@
- 
-var express        = require("express"),
-    app            = express(),
-    bodyParser     = require("body-parser"),
-    mongoose       = require("mongoose"),
-    flash          = require("connect-flash"),
-    passport       = require("passport"),
-    LocalStrategy  = require("passport-local"),
-    methodOverride = require("method-override"),
-    Campground     = require("./models/campground"),
-    Comment        = require("./models/comment"),
-    User           = require("./models/user"),
-    seedDB         = require("./seeds");
+var express          = require("express"),
+    app              = express(),
+    bodyParser       = require("body-parser"),
+    mongoose         = require("mongoose"),
+    methodOverride   = require("method-override");
 
-//requiring routes
-var commentRoutes    = require("./routes/comments"),
-    campgroundRoutes = require("./routes/campgrounds"),
-    indexRoutes      = require("./routes/index")
+mongoose.connect("mongodb://localhost:27017/todo_assignment", {useNewUrlParser: true});
 
-mongoose.connect("mongodb://shivam:shivam1691@ds115963.mlab.com:15963/yelp_camp", {useNewUrlParser: true});
-//mongodb://shivam:shivam1691@ds115963.mlab.com:15963/yelp_camp
-app.use(bodyParser.urlencoded({extended: true}));
+
 app.set("view engine", "ejs");
-app.use(express.static(__dirname + "/public"));
+app.use(express.static("public"));
+app.use(bodyParser.urlencoded({extended: true}));
 app.use(methodOverride("_method"));
-app.use(flash());
-//seedDB(); //seed the database
 
-//PASSPORT CONFIGURATION
-app.use(require("express-session")({
-  secret: "Heyy Its a secret",
-  resave: false,
-  saveUninitialized: false
-}));
+var todoSchema = new mongoose.Schema({
+	name : String,
 
-app.use(passport.initialize());
-app.use(passport.session());
-passport.use(new LocalStrategy(User.authenticate()));
-passport.serializeUser(User.serializeUser());
-passport.deserializeUser(User.deserializeUser());
-
-app.use(function(req, res, next){
-  res.locals.currentUser = req.user;
-  res.locals.error = req.flash("error");
-  res.locals.success = req.flash("success");
-  next();
 });
 
-app.use(indexRoutes);
-app.use(commentRoutes);
-app.use(campgroundRoutes);
+var Todo = mongoose.model("Todo", todoSchema);
+
+app.get("/", function(req,res){
+	res.redirect("/todos");
+});
+app.get("/todos", function(req,res){
+	res.render("index")
+});
+
+app.get("/todos/add", function(req, res){
+	res.render("add");
+});
+
+app.post("/todos", function(req,res){
+	var name = req.body.name;
+	
+	
+Todo.create(name, function(err, newlyCreated){
+	if(err){
+		console.log(err);
+	}else{
+		console.log(newlyCreated);
+		res.redirect("/todos");
+	}
+});
+});
 
 
 
-app.listen(3000, process.env.IP, function(){
 
-      console.log("THE YELP CAMP HAS STARTED");
-
+app.listen(3000, process.env.Ip, function(){
+	console.log("Server Started");
 });
